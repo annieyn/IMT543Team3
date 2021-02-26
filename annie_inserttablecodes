@@ -1,0 +1,22 @@
+--annie
+
+INSERT INTO tblSUPPLIER (CompanyName, SupplierCity, SupplierState, SupplierZipCode)
+VALUES('Ringo Fabric', 'Seattle', 'Washington, WA', '98108'), 
+('Sally B', 'Los Angeles', 'California, CA', '90026'), 
+('L&L', 'Houston', 'Texas, TX', '77002'), 
+('P&G', 'Orlando', 'Florida, FL', '32803'),
+('C&C', 'New York City', 'New York, NY', '10001')
+
+INSERT INTO tblPHONE_TYPE (PhoneName, PhoneDescr)
+VALUES ('Office', 'main phone line'), 
+('Work','most convenient'), 
+('Home', 'will return next day'), 
+('Fax', 'convenient'), 
+('Mobile', 'also conveient')
+
+INSERT INTO tblROLE (RoleName, RoleDescr)
+VALUES ('Manager', 'mangage overall operations'),
+('Marketing Staff', 'connect with customers'),
+('CS Representative', 'answer questions for customers'),
+('Manufacturer', 'produce goods for customers'),
+('Director', 'oversee the entire business operations')
