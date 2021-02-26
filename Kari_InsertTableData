@@ -1,0 +1,20 @@
+INSERT INTO tblCUSTOMER (CustomerFName, CustomerLName, CustomerEmail, CustomerDoB)
+VALUES ('Haile','barajas','hailebarajas01@gmail.com','11/01/1991'),
+('Cara','Priest','carapriest02@gmail.com','03/06/1983'),
+('Charie','Maes','chariemaes03@gmail.com','03/12/1979'),
+('March','Robb','marchrobb04@gmail.com','12/08/1977'),
+('Ama','Hanlon','amahanlon05@gmail.com','10/05/1990')
+
+INSERT INTO tblPRODUCT_CATEGORY (ProductCategoryName, ProductCategoryDescr)
+VALUES ('Apparel','Clothing for women men and children'),
+('Sportswear','Clothing for physical activites'),
+('Formal Wear','Evening cloth'),
+('Accessories','Items that contribute to clothing'),
+('Jewelry','A category of accessory')
+
+INSERT INTO tblSTATUS (StatusName, StatusDescr)
+VALUES ('Processing','Order still under the processing'),
+('Confirmed','Order already be confirmed'),
+('Shipped','Order already be shipped'),
+('Cancelled','Order be cancelled'),
+('Returned','Order be returned')
