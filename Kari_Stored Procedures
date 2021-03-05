@@ -36,7 +36,7 @@ CREATE PROCEDURE jakrInsertProduct
 AS
 DECLARE @PC_ID INT
 
-SET @PC_ID = (SELECT ProductCateogoryID FROM tblPRODUCT_CATEGORY WHERE ProductCategoryName = @PCName)
+SET @PC_ID = (SELECT ProductCateogoryID FROM tblPRODUCT_CATEGORY WHERE ProductCategoryName = @PCategoryName)
 
 BEGIN TRAN G1
 INSERT INTO tblPRODUCT (UnitPrice, SKU, ProductName, ProductCateogoryID)
