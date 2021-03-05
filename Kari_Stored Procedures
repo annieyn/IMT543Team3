@@ -1,6 +1,6 @@
 CREATE PROCEDURE jakrInsertCustomerPhone
-@ACode  INT (20),
-@PNumber INT (20),
+@ACode  INT,
+@PNumber INT,
 @CFName varchar (20),
 @CLName varchar (20)
 AS
@@ -58,7 +58,7 @@ EXEC jakrInsertProduct
 @PCategoryName = 'Sportswear'
 
 CREATE PROCEDURE jakrInsertOrderProduct
-@Quantity INT (20),
+@Quantity INT,
 @UPrice Varchar (20),
 @SKU Varchar (20),
 @ODate DATE
