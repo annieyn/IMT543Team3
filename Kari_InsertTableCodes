@@ -1,5 +1,5 @@
 INSERT INTO tblCUSTOMER (CustomerFName, CustomerLName, CustomerEmail, CustomerDoB)
-VALUES ('Haile','barajas','hailebarajas01@gmail.com','11/01/1991'),
+VALUES ('Haile','Barajas','hailebarajas01@gmail.com','11/01/1991'),
 ('Cara','Priest','carapriest02@gmail.com','03/06/1983'),
 ('Charie','Maes','chariemaes03@gmail.com','03/12/1979'),
 ('March','Robb','marchrobb04@gmail.com','12/08/1977'),
