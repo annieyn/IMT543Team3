@@ -1,0 +1,274 @@
+GO
+Create PROCEDURE jakrGetCustomerID  -- DONE
+ @Fname varchar(20),  
+ @Lname varchar(20),  
+ @CustID INT OUT  
+AS  
+BEGIN  
+SET @CustID = ( SELECT  Top 1 CustomerID FROM tblCUSTOMER   
+                WHERE CustomerFname = @Fname  
+                AND CustomerLname = @Lname)
+END  
+
+
+GO
+Create PROCEDURE jakrInsertCustCart --Done
+       @ProdName varchar(20),  
+        @Date DateTime,  
+        @CFname varchar(20),  
+        @CLname varchar(20),  
+       @Qty INT  
+AS  
+BEGIN  
+DECLARE @ProdID INT, @CustomerID INT 
+
+SET @ProdID = (SELECT ProductID FROM tblPRODUCT WHERE ProductName = @ProdName)  
+
+EXEC jakrGetCustomerID
+ @Fname = @CFname,
+ @Lname = @CLname,  
+ @CustID = @CustomerID OUT
+
+IF @CustomerID IS NULL
+    BEGIN
+        PRINT 'Some kind of problem going on with @CustomerID...Please check spelling';
+        THROW 56341, '@CustomerID cannot be NULL', 1;
+    END
+
+END  
+
+       INSERT INTO tblCUSTOMER_CART  (CustomerID, ProductID, Quantity, CartDate)  
+       VALUES (@CustomerID, @ProdID, @Qty, @Date)  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Rain jacket',  
+@Date = '2021-03-08',
+@Qty = 1,
+@CFname = 'Haile',  
+@CLname = 'barajas'  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Ski Jacket',  
+@Date = '2021-03-08',
+@Qty = 10,
+@CFname = 'Haile',  
+@CLname = 'barajas'  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Ski Jacket',  
+@Date = '2021-03-08',
+@Qty = 1,
+@CFname = 'Sara',  
+@CLname = 'Su'  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Pineapple earrings',  
+@Date = '2021-03-08',
+@Qty = 5,
+@CFname = 'Sara',  
+@CLname = 'Su' 
+
+EXEC jakrInsertCustCart
+@ProdName = 'Rain Jacket',  
+@Date = '2021-03-08',
+@Qty = 3,
+@CFname = 'Sara',  
+@CLname = 'Su' 
+
+
+EXEC jakrInsertCustCart
+@ProdName = 'Pineapple earrings',  
+@Date = '2021-03-08',
+@Qty = 1,
+@CFname = 'Sam',  
+@CLname = 'Lam' 
+
+EXEC jakrInsertCustCart
+@ProdName = 'Ski Jacket',  
+@Date = '2021-03-08',
+@Qty = 3,
+@CFname = 'Sam',  
+@CLname = 'Lam'  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Rain Jacket',  
+@Date = '2021-03-08',
+@Qty = 3,
+@CFname = 'Sam',  
+@CLname = 'Lam'  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Rain Jacket',  
+@Date = '2021-03-07',
+@Qty = 2,
+@CFname = 'Lisa',  
+@CLname = 'Wong'  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Ski Jacket',  
+@Date = '2021-03-07',
+@Qty = 1,
+@CFname = 'Lisa',  
+@CLname = 'Wong'  
+
+
+EXEC jakrInsertCustCart
+@ProdName = 'Ski Jacket',  
+@Date = '2021-03-07',
+@Qty = 1,
+@CFname = 'Cara',  
+@CLname = 'Priest' 
+
+EXEC jakrInsertCustCart
+@ProdName = 'Acorn Sportswear',  
+@Date = '2021-03-08',
+@Qty = 5,
+@CFname = 'Cara',  
+@CLname = 'Priest'  
+
+EXEC jakrInsertCustCart
+@ProdName = 'Ski Jacket',  
+@Date = '2021-03-07',
+@Qty = 20,
+@CFname = 'March',  
+@CLname = 'Robb' 
+
+EXEC jakrInsertCustCart
+@ProdName = 'Acorn Sportswear',  
+@Date = '2021-03-08',
+@Qty = 7,
+@CFname = 'March',  
+@CLname = 'Robb' 
+-------------
+GO
+CREATE PROCEDURE jakrProcessCustCart
+@CustFName varchar (20),
+@CustLName varchar (20) 
+AS  
+BEGIN  
+DECLARE @OrderID INT, @Customer_ID INT  
+  
+BEGIN TRANSACTION G1  
+PRINT 'Beginning TRAN G1; @@TRANCOUNT should equal 1'  
+PRINT @@TRANCOUNT  
+  
+BEGIN TRANSACTION G2  
+PRINT 'Beginning TRAN G2; @@TRANCOUNT should equal 2'  
+PRINT @@TRANCOUNT  
+  
+EXEC jakrGetCustomerID  
+ @Fname = @CustFName,  
+ @Lname = @CustLName,  
+ @CustID =  @Customer_ID OUT  
+
+INSERT INTO tblORDER ([CustomerID],[OrderDate])  
+VALUES (@Customer_ID, GetDate())  
+  
+SET @OrderID = (SELECT Scope_Identity())  
+  
+IF @OrderID IS NULL  
+ BEGIN  
+  PRINT 'Error in finding @orderID'  
+  RAISERROR ('@OrderID is NULL; terminating process', 11, 1)  
+  RETURN  
+ END  
+ELSE  
+
+INSERT INTO tblORDER_PRODUCT (OrderID, ProductID, Quantity)  
+SELECT @OrderID, ProductID, SUM(Quantity)  
+FROM tblCUSTOMER_CART  
+WHERE CustomerID = @Customer_ID  
+GROUP BY ProductID  
+  
+  
+IF @@ERROR <> 0  
+       BEGIN  
+             ROLLBACK TRANSACTION G2  
+       END  
+ELSE  
+ BEGIN  
+ PRINT 'COMMITTING TRAN G2; @@TRANCOUNT should be 2 still'  
+PRINT @@TRANCOUNT  
+  
+        COMMIT TRANSACTION G2  
+PRINT 'Just COMMITTED TRAN G2; @@TRANCOUNT should be 1 now'  
+PRINT @@TRANCOUNT  
+  
+ END  
+  
+--DELETE rows from tblCART that have just been processed  
+-- conduct a count to make sure number of rows processed is equal to the number of rows to be deleted  
+  
+  
+BEGIN TRANSACTION G3  
+PRINT 'Beginning TRAN G3 clean-up tblCART by deleting matching rows; @@TRANCOUNT should equal 2'  
+PRINT @@TRANCOUNT  
+  
+PRINT @@Rowcount  
+ DELETE   
+ FROM tblCUSTOMER_CART  
+ WHERE CustomerID = @Customer_ID
+  
+IF @@ERROR <> 0  
+       BEGIN  
+             ROLLBACK TRANSACTION G3  
+       END  
+ELSE  
+ BEGIN  
+ PRINT 'COMMITTING TRAN G3; @@TRANCOUNT should be 2 still'  
+PRINT @@TRANCOUNT  
+  
+       COMMIT TRANSACTION G3  
+PRINT 'Just COMMITTED TRAN G3; @@TRANCOUNT should be 1 now'  
+PRINT @@TRANCOUNT  
+  
+ END  
+  
+  
+  
+IF @@ERROR <> 0  
+       BEGIN  
+             ROLLBACK TRANSACTION G3  
+       END  
+  
+  
+ELSE  
+ BEGIN  
+  PRINT 'COMMITTING TRAN G1; @@TRANCOUNT should be 1 and ready to close'  
+PRINT @@TRANCOUNT  
+IF @@TRANCOUNT <> 1  
+ BEGIN  
+             ROLLBACK TRANSACTION G1  
+PRINT '@@TRANCOUNT <> 1; whole transaction is rolling back'  
+       END  
+ELSE  
+       COMMIT TRANSACTION G1  
+PRINT 'Just COMMITTED TRAN G1; @@TRANCOUNT should be 0 now'  
+PRINT @@TRANCOUNT  
+  
+ END  
+  
+END  
+
+exec jakrProcessCustCart
+@CustFName = 'Sara',
+@CustLName = 'Su'
+
+exec jakrProcessCustCart
+@CustFName = 'Sam',
+@CustLName = 'Lam'
+
+
+exec jakrProcessCustCart
+@CustFName = 'Haile',
+@CustLName = 'barajas'
+
+
+exec jakrProcessCustCart
+@CustFName = 'March',
+@CustLName = 'Robb'
+
+
+exec jakrProcessCustCart
+@CustFName = 'Cara',
+@CustLName = 'Priest'
