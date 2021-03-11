@@ -1,0 +1,28 @@
+---sql code for computed column---
+--Find the average employee salaries from all departments
+
+SELECT EmployeeFName, EmployeeLName
+FROM tblEMPLOYEE E
+    JOIN tblJOB J ON E.EmployeeID = J.EmployeeID
+    JOIN tblDEPARTMENT D ON J.DepartmentID = D.DepartmentID
+GROUP BY D.DepartmentName
+ORDER BY Avg(Salaries) 
+
+
+--sql code for business rule
+--The maximum cost of a single order is $100,000
+
+SELECT *
+FROM tblPURCHASE_ORDER PO 
+WHERE TotalAmount < '100,000'
+
+
+--sql code for business rule
+--We cannot contact customers who are under age 18 by phone
+
+SELECT CustomerFName, CustomerLName, CustomerDoB
+FROM tblCUSTOMER C 
+    JOIN tblCUSTOMER_PHONE C_P ON C.CustomerID = C_P.CustomerID
+WHERE [YEAR] > 2003
+GROUP BY CustomerFName, CustomerLName, CustomerDoB
+ORDER BY CustomerDoB ASC 
