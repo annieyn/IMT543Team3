@@ -1,0 +1,33 @@
+-- Business rule:
+-- No employee under the age of 16 can work in marketing, finance in the state of New York and Washington.
+
+SELECT E.EmployeeFName,E.EmployeeLName,E.DateOfBirth
+FROM tblEMPLOYEE E
+    JOIN tblJOB J ON E.EmployeeID = J.EmployeeID
+    JOIN tblDEPARTMENT D ON J.DepartmentID = D.DepartmentID
+    JOIN tblBRANCHES B ON J.BranchID = B.BranchID
+WHERE E.DateOfBirth > DateADD(year, -16, GETDATE())
+AND D.DepartmentName LIKE 'Marketing'
+AND D.DepartmentName LIKE 'Finance'
+AND BranchState LIKE 'New York'
+And BranchState LIKE 'Washington'
+
+
+-- Computed Column
+-- Total number of item sold for each product
+GO
+CREATE FUNCTION fnTot_Num_Sold (@ProductID INT)
+RETURNS INT
+AS
+BEGIN
+Declare @RET INT = 
+    (SELECT SUM(Quantity) From tblORDER_PRODUCT Where ProductID = @ProductID)
+
+RETURN @RET
+END 
+
+GO 
+
+ALTER TABLE tblPRODUCT 
+ADD TotalItemSold AS (dbo.fnTot_Num_Sold(ProductID))
+
