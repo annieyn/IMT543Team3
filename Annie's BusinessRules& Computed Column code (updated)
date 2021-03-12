@@ -1,0 +1,44 @@
+---sql code for computed column---
+--Find the average employee salaries from all departments
+
+USE IMT543_Proj_03_jakr
+GO
+
+CREATE FUNCTION an_AvgEmployeeSalaries(@PK INT)
+RETURNS NUMERIC (14,2)
+AS 
+BEGIN
+    DECLARE @RET NUMERIC (14,2) = (SELECT AVG(salaries)
+    FROM tblJOB 
+    WHERE DepartmentID = @PK)
+
+RETURN @RET
+END 
+GO
+
+ALTER TABLE tblDEPARTMENT
+ADD AverageSalaries AS (dbo.an_AvgEmployeeSalaries(DepartmentID))
+
+
+--sql code for business rule
+--We cannot contact customers who are under age 18 by phone
+GO
+CREATE FUNCTION an_Cannot_Contact_Cus_UnderAge18()
+RETURNS INTEGER
+AS 
+BEGIN
+    DECLARE @RET INTEGER = 0
+    IF EXISTS (SELECT * 
+    FROM tblCUSTOMER    
+WHERE CustomerDoB > DATEADD(Year, -18, GetDate()))
+SET @RET = 1
+RETURN @RET 
+END 
+GO 
+SELECT dbo.an_Cannot_Contact_Cus_UnderAge18() 
+
+
+ALTER TABLE tblCUSTOMER_PHONE WITH Nocheck
+ADD CONSTRAINT CK_Age18NoContact
+CHECK (dbo.an_Cannot_Contact_Cus_UnderAge18() =0)
+GO
