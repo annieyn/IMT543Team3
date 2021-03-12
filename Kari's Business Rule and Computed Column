@@ -44,3 +44,21 @@ GO
 
 ALTER TABLE tblPURCHASE_ORDER
 ADD CalcTotalAmountSpentPast5 AS (dbo.jakr_CalcTotalAmountSpent(PurchaseOrderID))
+
+----------
+CREATE FUNCTION jakr_AvgEmployTenureinNY(@PK INT)
+RETURNS NUMERIC (14,2)
+AS
+BEGIN  
+    DECLARE @RET NUMERIC (14,2) = (SELECT DATEADD(YEAR, BeginDate, EndDate()) AS AvgTenure
+        FROM tblJOB J
+        JOIN tblEMPLOYEE E ON J.EmployeeID = E.EmployeeID
+        WHERE EmployeeID = @PK
+        AND E.EmployeeState = 'New York, NY'
+        )
+RETURN @RET
+END
+GO         
+
+ALTER TABLE tblJOB
+ADD AvrageTenure AS (dbo.akr_AvgEmployTenureinNY(EmployeeID))
