@@ -54,7 +54,7 @@ DECLARE @RET INTEGER =0
     JOIN tblORDER O ON O.CustomerID = C.CustomerID
     JOIN tblORDER_PRODUCT OP ON O.OrderID = OP.OrderProductID
     JOIN tblPRODUCT P ON P.ProductID = OP.ProductID
-    WHERE C.CustomerDoB < DATEADD(YEAR, -18, GETDATE()) 
+    WHERE C.CustomerDoB > DATEADD(YEAR, -18, GETDATE()) 
     AND O.OrderDate BETWEEN '01/01/2021' AND '12/31/2021'
     AND P.ProductName = 'Black Tuxedo Jacket')
         SET @RET = 1
