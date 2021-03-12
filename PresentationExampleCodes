@@ -1,0 +1,104 @@
+--Create Look-Up Table and insert data
+
+CREATE DATABASE IMT543_Proj_03_jakr
+
+use IMT543_Proj_03_jakr
+CREATE TABLE tblCUSTOMER
+(CustomerID INTEGER IDENTITY(1,1) primary key,
+CustomerFName Varchar(20) NOT NULL,
+CustomerLName Varchar(20) NOT NULL,
+CustomerEmail Varchar(40) NOT NULL,
+CustomerDoB Date NOT NULL)
+
+INSERT INTO tblCUSTOMER (CustomerFName, CustomerLName, CustomerEmail, CustomerDoB)
+VALUES ('Haile','barajas','hailebarajas01@gmail.com','11/01/1991'),
+('Cara','Priest','carapriest02@gmail.com','03/06/1983')
+
+
+--Create Transactional Table and Stored Procedure to populate transactional table
+CREATE TABLE tblBRANCHES(
+BranchID INTEGER IDENTITY(1,1) primary key,
+BranchCity VARCHAR(50) NOT NULL,
+BranchState VARCHAR(50) NOT NULL,
+BranchZipCode INT NOT NULL,
+LocationID INTEGER FOREIGN KEY REFERENCES tblLOCATION(LocationID) NOT NULL)
+
+
+CREATE PROCEDURE jakrInsertBranches
+@LocName VARCHAR(20),
+@BranCity VARCHAR(50),
+@BranState VARCHAR(50),
+@BranZC INT
+AS
+DECLARE @Loc_ID INT
+​
+SET @Loc_ID = (SELECT LOCATIONID FROM tblLOCATION WHERE LocationName = @LocName)
+​
+BEGIN TRAN G1
+INSERT INTO tblBRANCHES(LocationID, BranchCity, BranchState, BranchZipCode)
+VALUES(@Loc_ID, @BranCity, @BranState, @BranZC)
+​
+Commit TRAN G1
+​
+exec jakrInsertBranches-- DONE
+@LocName = 'Downtown Bellevue',
+@BranCity = 'Bellevue',
+@BranState = 'Washington, WA',
+@BranZC =98004
+
+exec jakrInsertBranches-- DONE
+@LocName = 'Downtown Manhattan ',
+@BranCity = 'New York',
+@BranState = 'New York, NY',
+@BranZC =10002
+
+
+---Business Rule
+--Customers who are younger than 18 cannot be eligible for buying our product: Black Tuxedo Jacket in 2021
+
+GO
+CREATE FUNCTION fn_NoCustomer18_tuxedo2021 ()
+RETURNS INTEGER
+AS 
+BEGIN
+
+DECLARE @RET INTEGER =0
+
+    IF EXISTS (SELECT * FROM tblCUSTOMER C
+    JOIN tblORDER O ON O.CustomerID = C.CustomerID
+    JOIN tblORDER_PRODUCT OP ON O.OrderID = OP.OrderProductID
+    JOIN tblPRODUCT P ON P.ProductID = OP.ProductID
+    WHERE C.CustomerDoB < DATEADD(YEAR, -18, GETDATE()) 
+    AND O.OrderDate BETWEEN '01/01/2021' AND '12/31/2021'
+    AND P.ProductName = 'Black Tuxedo Jacket')
+        SET @RET = 1
+
+RETURN @RET
+END
+
+go
+
+SELECT dbo.fn_NoCustomer18_tuxedo2021()
+
+ALTER TABLE tblCUSTOMER_CART WITH Nocheck
+ADD CONSTRAINT CK_18YoungerNoTuxedo2021
+CHECK (dbo.fn_NoCustomer18_tuxedo2021()=0)
+
+
+--Computed Column
+--Calculate the average salary in each department
+GO
+CREATE FUNCTION an_AvgEmployeeSalaries(@PK INT)
+RETURNS NUMERIC (14,2)
+AS 
+BEGIN
+    DECLARE @RET NUMERIC (14,2) = (SELECT AVG(salaries)
+    FROM tblJOB 
+    WHERE DepartmentID = @PK)
+
+RETURN @RET
+END 
+GO
+
+ALTER TABLE tblDEPARTMENT
+ADD AverageSalaries AS (dbo.an_AvgEmployeeSalaries(DepartmentID))
