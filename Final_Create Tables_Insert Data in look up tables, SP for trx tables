@@ -1,6 +1,6 @@
-CREATE DATABASE jmah_Projects
+CREATE DATABASE IMT543_Proj_03_jakr
 
-use jmah_Projects
+use IMT543_Proj_03_jakr
 -- 11 tables without FKS
 CREATE TABLE tblGENDER
 (GenderID INTEGER IDENTITY(1,1) primary key,
