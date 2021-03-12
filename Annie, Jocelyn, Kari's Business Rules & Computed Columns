@@ -1,0 +1,153 @@
+--------Annie's Computed Column
+--Calculate the average salary in each department
+GO
+CREATE FUNCTION an_AvgEmployeeSalaries(@PK INT)
+RETURNS NUMERIC (14,2)
+AS 
+BEGIN
+    DECLARE @RET NUMERIC (14,2) = (SELECT AVG(salaries)
+    FROM tblJOB 
+    WHERE DepartmentID = @PK)
+
+RETURN @RET
+END 
+GO
+
+ALTER TABLE tblDEPARTMENT
+ADD AverageSalaries AS (dbo.an_AvgEmployeeSalaries(DepartmentID))
+
+
+-----Annie's Business rule
+--We cannot contact customers who are under age 18 by phone
+GO
+CREATE FUNCTION an_Cannot_Contact_Cus_UnderAge18()
+RETURNS INTEGER
+AS 
+BEGIN
+    DECLARE @RET INTEGER = 0
+    IF EXISTS (SELECT * 
+    FROM tblCUSTOMER    
+WHERE CustomerDoB > DATEADD(Year, -18, GetDate()))
+SET @RET = 1
+RETURN @RET 
+END 
+GO 
+SELECT dbo.an_Cannot_Contact_Cus_UnderAge18() 
+
+ALTER TABLE tblCUSTOMER_PHONE WITH Nocheck
+ADD CONSTRAINT CK_Age18NoContact
+CHECK (dbo.an_Cannot_Contact_Cus_UnderAge18() =0)
+GO
+
+----Jocelyn's Business Rule
+--Statement: Customers who are younger than 18 cannot be eligible for buying our product: Black Tuxedo Jacket in 2021
+
+GO
+CREATE FUNCTION fn_NoCustomer18_tuxedo2021 ()
+RETURNS INTEGER
+AS 
+BEGIN
+
+DECLARE @RET INTEGER =0
+
+    IF EXISTS (SELECT * FROM tblCUSTOMER C
+    JOIN tblORDER O ON O.CustomerID = C.CustomerID
+    JOIN tblORDER_PRODUCT OP ON O.OrderID = OP.OrderProductID
+    JOIN tblPRODUCT P ON P.ProductID = OP.ProductID
+    WHERE C.CustomerDoB < DATEADD(YEAR, -18, GETDATE()) 
+    AND O.OrderDate BETWEEN '01/01/2021' AND '12/31/2021'
+    AND P.ProductName = 'Black Tuxedo Jacket')
+        SET @RET = 1
+
+RETURN @RET
+END
+
+go
+
+SELECT dbo.fn_NoCustomer18_tuxedo2021()
+
+ALTER TABLE tblCUSTOMER_CART WITH Nocheck
+ADD CONSTRAINT CK_18YoungerNoTuxedo2021
+CHECK (dbo.fn_NoCustomer18_tuxedo2021()=0)
+
+------Jocelyn's Computed column
+--A SQL Function to calculate the total amount of each order in tblOrder
+
+--First Function to calculate PriceExtd in tblORDER_PRODUCT
+GO
+CREATE FUNCTION fnCal_OrderProduct_PriceExtd (@OrderProductID INT)
+RETURNS NUMERIC (12,2)
+AS
+BEGIN
+DECLARE @RET NUMERIC (12,2) = 
+            (SELECT P.UnitPrice*OP.Quantity from tblPRODUCT P
+            JOIN tblORDER_PRODUCT OP ON P.ProductID = OP.ProductID
+            WHERE OP.OrderProductID = @OrderProductID)
+
+RETURN @RET
+END
+
+GO
+
+ALTER TABLE tblORDER_product
+add PriceExtd AS (dbo.fnCal_OrderProduct_PriceExtd(OrderProductID))
+
+----Second FUNCTION to calculate TotalAmount in tblOrder
+GO
+CREATE FUNCTION fnCal_Order_TotalAmount (@OrderID INT)
+RETURNS NUMERIC (12,2)
+AS 
+BEGIN
+DECLARE @RET NUMERIC (12,2) = (SELECT SUM(PriceExtd) FROM tblORDER_PRODUCT WHERE OrderID = @OrderID)
+
+RETURN @RET
+END
+
+go
+ALTER TABLE tblORDER
+add TotalAmount AS (dbo.fnCal_Order_TotalAmount(OrderID))
+
+---Kari's BUSINESS RULE
+-- No employee older than 65 from the state of California may work at the location "Downtown Manhattan" 
+GO
+CREATE FUNCTION jakr_fn_NoEmplo65_DM_California()
+RETURNS INTEGER
+AS
+BEGIN
+DECLARE @RET INTEGER = 0
+    IF EXISTS (SELECT *
+        FROM tblEMPLOYEE E
+            JOIN tblJOB J ON E.EmployeeID = J.EmployeeID
+            JOIN tblBRANCHES B ON J.BranchID = B.BranchID
+            JOIN tblLOCATION L ON B.LocationID = L.LocationID
+        WHERE E.DateOfBirth < DateAdd(Year, -65, GetDate())
+        AND E.EmployeeState = 'California,CA'
+        AND L.LocationName = 'Downtown Manhattan')
+    BEGIN
+        SET @RET = 1
+    END
+RETURN @RET
+END
+GO     
+
+ALTER TABLE tblEMPLOYEE
+ADD CONSTRAINT CK_NoEmploOlder37
+CHECK (dbo.jakr_fn_NoEmplo65_DM_California() =0)
+GO
+
+
+------------
+--Kari's Computed function to calculate the average tenure year of employees in each branch
+GO
+CREATE FUNCTION fn_AvgEmployeeTenureEachBranch(@PK INT)
+RETURNS int 
+AS
+BEGIN  
+    DECLARE @RET int = (select avg (DATEDIFF (Year, CONVERT(DATETIME, BeginDate), GETDATE())) as Avg_Tenure from tbljob
+        WHERE BranchID = @PK)
+RETURN @RET
+END
+GO
+
+ALTER TABLE tblBranches
+ADD AverageTenure AS (dbo.fn_AvgEmployeeTenureEachBranch(BranchID))
