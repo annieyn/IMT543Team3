@@ -26,39 +26,21 @@ CHECK (dbo.jakr_fn_NoEmplo65_DM_California() =0)
 GO
 
 
--- The SQL code to create a function to enforce a computed column
--- Total amounts spent in the past 5 years for the purchase order
-CREATE FUNCTION jakr_CalcTotalAmountSpent(@PK INT)
-RETURNS NUMERIC (13,2)
-AS
-BEGIN  
-    DECLARE @RET NUMERIC (13,2) = (SELECT SUM(PO.TotalAmount)
-                FROM tblPURCHASE_ORDER_PRODUCT POP
-                JOIN tblPURCHASE_ORDER PO ON POP.PurchaseOrderID = PO.PurchaseOrderID
-                WHERE PO.PurchaseOrderID = @PK
-                AND PO.PurchaseDate > DateAdd(Year, -5, GetDate())
-                )
-RETURN @RET
-END
-GO         
-
-ALTER TABLE tblPURCHASE_ORDER
-ADD CalcTotalAmountSpentPast5 AS (dbo.jakr_CalcTotalAmountSpent(PurchaseOrderID))
-
 ----------
-CREATE FUNCTION jakr_AvgEmployTenureinNY(@PK INT)
+-- The SQL code to create a function to enforce a computed column
+-- A SQL Function to calculate Average employee tenure for each branch 
+CREATE FUNCTION jakr_AvgEmployTenureEachBranch(@PK INT)
 RETURNS NUMERIC (14,2)
 AS
 BEGIN  
-    DECLARE @RET NUMERIC (14,2) = (SELECT DATEADD(YEAR, BeginDate, EndDate()) AS AvgTenure
+    DECLARE @RET NUMERIC (14,2) = (SELECT DATEADD(YEAR, BeginDate, EndDate()) AS AverageTenure
         FROM tblJOB J
-        JOIN tblEMPLOYEE E ON J.EmployeeID = E.EmployeeID
-        WHERE EmployeeID = @PK
-        AND E.EmployeeState = 'New York, NY'
+        JOIN tblBRANCHES E ON J.BranchID = E.BranchID
+        WHERE BranchID = @PK
         )
 RETURN @RET
 END
 GO         
 
 ALTER TABLE tblJOB
-ADD AvrageTenure AS (dbo.akr_AvgEmployTenureinNY(EmployeeID))
+ADD AverageTenure AS (dbo.jakr_AvgEmployTenureEachBranch(BranchID))
