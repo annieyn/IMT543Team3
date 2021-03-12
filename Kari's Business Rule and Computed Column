@@ -1,0 +1,46 @@
+-- The SQL code to create the function to enforce the business rule
+-- No employee older than 65 from the state of California may not work at the location "Downtown Manhattan" 
+CREATE FUNCTION jakr_fn_NoEmplo65_DM_California()
+RETURNS INTEGER
+AS
+BEGIN
+DECLARE @RET INTEGER = 0
+    IF EXISTS (SELECT *
+        FROM tblEMPLOYEE E
+            JOIN tblJOB J ON E.EmployeeID = J.EmployeeID
+            JOIN tblBRANCHES B ON J.BranchID = B.BranchID
+            JOIN tblLOCATION L ON B.LocationID = L.LocationID
+        WHERE E.DateOfBirth < DateAdd(Year, -65, GetDate())
+        AND E.EmployeeState = 'California,CA'
+        AND L.LocationName = 'Downtown Manhattan')
+    BEGIN
+        SET @RET = 1
+    END
+RETURN @RET
+END
+GO     
+
+ALTER TABLE tblEMPLOYEE
+ADD CONSTRAINT CK_NoEmploOlder37
+CHECK (dbo.jakr_fn_NoEmplo65_DM_California() =0)
+GO
+
+
+-- The SQL code to create a function to enforce a computed column
+-- Total amounts spent in the past 5 years for the purchase order
+CREATE FUNCTION jakr_CalcTotalAmountSpent(@PK INT)
+RETURNS NUMERIC (13,2)
+AS
+BEGIN  
+    DECLARE @RET NUMERIC (13,2) = (SELECT SUM(PO.TotalAmount)
+                FROM tblPURCHASE_ORDER_PRODUCT POP
+                JOIN tblPURCHASE_ORDER PO ON POP.PurchaseOrderID = PO.PurchaseOrderID
+                WHERE PO.PurchaseOrderID = @PK
+                AND PO.PurchaseDate > DateAdd(Year, -5, GetDate())
+                )
+RETURN @RET
+END
+GO         
+
+ALTER TABLE tblPURCHASE_ORDER
+ADD CalcTotalAmountSpentPast5 AS (dbo.jakr_CalcTotalAmountSpent(PurchaseOrderID))
