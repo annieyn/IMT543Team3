@@ -1,5 +1,5 @@
 -- The SQL code to create the function to enforce the business rule
--- No employee older than 65 from the state of California may not work at the location "Downtown Manhattan" 
+-- No employee older than 65 from the state of California may work at the location "Downtown Manhattan" 
 CREATE FUNCTION jakr_fn_NoEmplo65_DM_California()
 RETURNS INTEGER
 AS
