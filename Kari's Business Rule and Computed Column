@@ -27,20 +27,16 @@ GO
 
 
 ----------
--- The SQL code to create a function to enforce a computed column
--- A SQL Function to calculate Average employee tenure for each branch 
-CREATE FUNCTION jakr_AvgEmployTenureEachBranch(@PK INT)
-RETURNS NUMERIC (14,2)
+--Computed function to calculate the average tenure year of employees in each branch
+GO
+CREATE FUNCTION fn_AvgEmployeeTenureEachBranch(@PK INT)
+RETURNS int 
 AS
 BEGIN  
-    DECLARE @RET NUMERIC (14,2) = (SELECT DATEADD(YEAR, BeginDate, EndDate()) AS AverageTenure
-        FROM tblJOB J
-        JOIN tblBRANCHES E ON J.BranchID = E.BranchID
-        WHERE BranchID = @PK
-        )
+    DECLARE @RET int = (select avg (DATEDIFF (Year, CONVERT(DATETIME, BeginDate), GETDATE())) as Avg_Tenure from tbljob
+        WHERE BranchID = @PK)
 RETURN @RET
 END
-GO         
-
-ALTER TABLE tblJOB
-ADD AverageTenure AS (dbo.jakr_AvgEmployTenureEachBranch(BranchID))
+GO    
+ALTER TABLE tblBranches
+ADD AverageTenure AS (dbo.fn_AvgEmployeeTenureEachBranch(BranchID))
