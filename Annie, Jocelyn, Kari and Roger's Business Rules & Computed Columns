@@ -107,7 +107,7 @@ go
 ALTER TABLE tblORDER
 add TotalAmount AS (dbo.fnCal_Order_TotalAmount(OrderID))
 
----Kari's BUSINESS RULE
+-----------Kari's BUSINESS RULE
 -- No employee older than 65 from the state of California may work at the location "Downtown Manhattan" 
 GO
 CREATE FUNCTION jakr_fn_NoEmplo65_DM_California()
@@ -135,9 +135,9 @@ ADD CONSTRAINT CK_NoEmploOlder37
 CHECK (dbo.jakr_fn_NoEmplo65_DM_California() =0)
 GO
 
-
 ------------
---Kari's Computed function to calculate the average tenure year of employees in each branch
+--Kari's Computed function 
+--- A function to calculate the average tenure year of employees in each branch
 GO
 CREATE FUNCTION fn_AvgEmployeeTenureEachBranch(@PK INT)
 RETURNS int 
@@ -151,3 +151,51 @@ GO
 
 ALTER TABLE tblBranches
 ADD AverageTenure AS (dbo.fn_AvgEmployeeTenureEachBranch(BranchID))
+
+-----------------Roger's Business rule:
+-- No employee under the age of 16 can work in marketing, finance in the state of New York and Washington.
+GO
+Create Function fnNoEmp16_Mark_Finan_NY_WA()
+RETURNS INT
+AS
+BEGIN
+DECLARE @RET INT = 0 
+    IF EXISTS (SELECT *
+        FROM tblJOB J
+            JOIN tblEmployee E on E.EmployeeID = J.EmployeeID
+            JOIN tblBRANCHES B on J.BranchID = B.BranchID
+            JOIN tblDEPARTMENT D ON J.DepartmentID = D.DepartmentID
+        WHERE E.DateOfBirth > DATEADD(Year, -16, GETDATE())
+        AND D.DepartmentName = 'Marketing'
+        AND D.DepartmentName = 'Finance'
+        AND B.BranchState='New York, NY'
+        AND B.BranchState = 'Washington, WA')
+    BEGIN
+        Set @RET=1
+    END
+RETURN @RET 
+END
+GO
+
+ALTER TABLE tblJob
+ADD CONSTRAINT CK_NoEmp16_NY_WA
+CHECK (dbo.fnNoEmp16_Mark_Finan_NY_WA()=0)
+GO
+
+--------Roger's Computed Column
+-- A function to calculate the total number of each product sold in tblProduct
+GO
+CREATE FUNCTION fnTot_Num_Sold (@ProductID INT)
+RETURNS INT
+AS
+BEGIN
+Declare @RET INT = 
+    (SELECT SUM(Quantity) From tblORDER_PRODUCT Where ProductID = @ProductID)
+
+RETURN @RET
+END 
+
+GO 
+
+ALTER TABLE tblPRODUCT 
+ADD TotalItemSold AS (dbo.fnTot_Num_Sold(ProductID))
